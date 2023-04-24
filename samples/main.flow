@@ -1,0 +1,8 @@
+//a = 42;
+print("Labas");
+
+//if (a != 69) {
+//  print(1);
+//} else {
+//  print(2);
+//}

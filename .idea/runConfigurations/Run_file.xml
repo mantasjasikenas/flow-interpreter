@@ -1,0 +1,16 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run file" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="flow.interpreter.FlowInterpreter" />
+    <module name="flow-interpreter" />
+    <option name="PROGRAM_PARAMETERS" value="-f samples/main.flow" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="edu.ktu.glang.interpreter.types.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

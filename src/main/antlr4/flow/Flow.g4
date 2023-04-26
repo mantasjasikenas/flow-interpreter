@@ -3,7 +3,9 @@ grammar Flow;
 program : statement+ EOF ;
 
 statement
-    : declaration
+    : classDeclaration
+    | methodInvocation SEMICOLON
+    | declaration // global declaration
     | variableAssignment
     | assignment SEMICOLON
     | loopStatement
@@ -20,7 +22,7 @@ expression
     | CHAR                              #charExpression
     | BOOLEAN                           #booleanExpression
     | ID                                #idExpression
-    | INT RANGE INT                     #rangeExpression
+    | NEW ID                            #newExpression
     | '(' expression ')'                #parenthesesExpression
     | expression intMultiOp expression  #intMultiOpExpression
     | expression intAddOp expression    #intAddOpExpression
@@ -35,31 +37,36 @@ loopStatement
 
 forStatement
     : FOR LPAREN (ID)
-      IN expression RPAREN (controlStructureBody | SEMICOLON)
+      IN rangeExpression RPAREN controlStructureBody
+    ;
+
+rangeExpression
+    : expression RANGE expression
     ;
 
 whileStatement
-    : WHILE LPAREN expression RPAREN (controlStructureBody | SEMICOLON)
+    : WHILE LPAREN expression RPAREN controlStructureBody
     ;
 
 
 ifStatement : IF LPAREN expression relationOp expression RPAREN controlStructureBody
     (ELSE controlStructureBody)? ;
 
-controlStructureBody: LBRACE statement+ RBRACE ;
+controlStructureBody: LBRACE statement* RBRACE ;
 
 printStatement : (PRINT | PRINTLN) LPAREN expression RPAREN ;
 
 declaration
-    : classDeclaration
-    | methodDeclaration
+    : methodDeclaration
     | arrayDeclaration
     | variableDeclaration
     ;
 
-classDeclaration : CLASS ID LBRACE (classMemberDeclarations) RBRACE ;
+classDeclaration : CLASS ID LBRACE (classMember)* RBRACE ;
 
-methodDeclaration : FUN ID LPAREN (methodParams) RPAREN (COLON METHOD_TYPE)? LBRACE (statement)* RBRACE ;
+classConstructor : CONSTRUCTOR LPAREN (methodParams)? RPAREN controlStructureBody ;
+
+methodDeclaration : FUN ID LPAREN (methodParams)? RPAREN (COLON METHOD_TYPE)? LBRACE (statement)* RBRACE ;
 
 arrayDeclaration : VARIABLE ID (COLON ARRAY_TYPE)? ASSIGN (('arrayOf' LPAREN (expression (COMMA expression)*)? RPAREN) | (LBRACE (expression (COMMA expression)*)? RBRACE)) SEMICOLON ;
 
@@ -67,15 +74,17 @@ variableDeclaration : VARIABLE ID (COLON TYPE)? (ASSIGN expression)? SEMICOLON ;
 
 variableAssignment : ID ASSIGN expression SEMICOLON ;
 
-classMemberDeclarations
-    : (classMemberDeclaration SEMICOLON?)*
+classMember
+    : classConstructor
+    | declaration
     ;
 
-classMemberDeclaration
-    : declaration
-    ;
 
-methodParams : (ID COLON (TYPE | ARRAY_TYPE) (COMMA ID COLON (TYPE | ARRAY_TYPE))*)? ;
+methodInvocation : ID DOT ID LPAREN (methodArgs)? RPAREN ;
+
+methodParams : (ID COLON (TYPE | ARRAY_TYPE) (COMMA ID COLON (TYPE | ARRAY_TYPE))*) ;
+
+methodArgs : (expression (COMMA expression)*) ;
 
 
 
@@ -105,6 +114,7 @@ LBRACE: '{' ;
 RBRACE: '}' ;
 RANGE: '..';
 COMMA: ',';
+DOT: '.';
 
 PRINT   : 'print';
 PRINTLN : 'println';
@@ -113,10 +123,12 @@ ELSE: 'else' ;
 FOR: 'for' ;
 WHILE: 'while' ;
 IN: 'in' ;
+NEW: 'new' ;
 CLASS: 'class' ;
 FUN: 'fun' ;
 VARIABLE: ('var' | 'val') ;
 RETURN: 'return' ;
+CONSTRUCTOR: 'constructor' ;
 
 ID: [a-zA-Z]+ [a-zA-Z0-9]* ;
 COMMENT : ( ('//' | '#') ~[\r\n]* | '/*' .*? '*/' ) -> skip ;

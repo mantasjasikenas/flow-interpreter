@@ -16,6 +16,7 @@ statement
     | loopStatement
     | ifStatement
     | printStatement
+    | iOStatement
     ;
 
 
@@ -57,6 +58,21 @@ whileStatement
 
 ifStatement : IF LPAREN expression relationOp expression RPAREN controlStructureBody
     (ELSE controlStructureBody)? ;
+
+iOStatement
+    : readStatement
+     | readLineStatement
+     | readFileStatement
+     | writeFileStatement
+     | readStatement; // TODO move print statement to IO statement
+
+readStatement : READ LPAREN RPAREN SEMICOLON ;
+
+readLineStatement : READ_LINE LPAREN RPAREN SEMICOLON;
+
+readFileStatement : READ_FILE LPAREN (STRING | ID) RPAREN SEMICOLON ;
+
+writeFileStatement : WRITE_FILE LPAREN (STRING | ID) COMMA (STRING | ID) RPAREN SEMICOLON ;
 
 methodBodyStatement : statement | returnStatement ;
 
@@ -135,9 +151,11 @@ DOT: '.';
 
 PRINT   : 'print';
 PRINTLN : 'println';
+READ: 'read';
 READ_LINE   : 'readLine'; // TODO add read line from console
-READ_FILE    : 'read'; // TODO add read file
-WRITE_FILE   : 'write'; // TODO add write file
+
+READ_FILE    : 'readFile'; // TODO add read file
+WRITE_FILE   : 'writeFile'; // TODO add write file
 
 UNIT: 'Unit' ;
 IF: 'if' ;

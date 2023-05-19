@@ -14,13 +14,15 @@ import static flow.interpreter.util.Helpers.getClassName;
 public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
     private final StringBuilder SYSTEM_OUT = new StringBuilder();
-    private final SymbolTable symbolTable;
+    protected final SymbolTable symbolTable;
     private final IfStatementVisitor ifStatementVisitor;
+    private final IoStatementVisitor ioStatementVisitor;
 
 
     public InterpreterVisitor(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
         this.ifStatementVisitor = new IfStatementVisitor(this);
+        this.ioStatementVisitor = new IoStatementVisitor(this);
     }
 
     @Override
@@ -408,4 +410,28 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         return this.ifStatementVisitor.visitIfStatement(ctx);
     }
 
+    @Override
+    public Object visitIOStatement(FlowParser.IOStatementContext ctx) {
+        return this.ioStatementVisitor.visitIOStatement(ctx);
+    }
+
+    @Override
+    public Object visitReadStatement(FlowParser.ReadStatementContext ctx) {
+        return this.ioStatementVisitor.visitReadStatement(ctx);
+    }
+
+    @Override
+    public Object visitReadLineStatement(FlowParser.ReadLineStatementContext ctx) {
+        return this.ioStatementVisitor.visitReadLineStatement(ctx);
+    }
+
+    @Override
+    public Object visitReadFileStatement(FlowParser.ReadFileStatementContext ctx) {
+        return this.ioStatementVisitor.visitReadFileStatement(ctx);
+    }
+
+    @Override
+    public Object visitWriteFileStatement(FlowParser.WriteFileStatementContext ctx) {
+        return this.ioStatementVisitor.visitWriteFileStatement(ctx);
+    }
 }

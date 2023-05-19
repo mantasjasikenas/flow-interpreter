@@ -2,6 +2,8 @@ package flow.interpreter;
 
 import flow.FlowLexer;
 import flow.FlowParser;
+import flow.interpreter.scope.SymbolTable;
+import flow.interpreter.visitor.InterpreterVisitor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -119,6 +121,7 @@ public class FlowInterpreter {
         FlowLexer lexer = new FlowLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         FlowParser parser = new FlowParser(tokens);
+
         parser.removeErrorListeners();
         FlowErrorListener errorListener = new FlowErrorListener();
         parser.addErrorListener(errorListener);

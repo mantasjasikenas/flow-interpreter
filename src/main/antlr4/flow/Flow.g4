@@ -1,29 +1,35 @@
 grammar Flow;
 
-program : statement+ EOF ;
+program : globalStatement+ EOF ;
+
+globalStatement
+    : classDeclaration
+    | methodDeclaration
+    | statement;
 
 statement
-    : classDeclaration
-    | methodInvocation SEMICOLON
-    | declaration // global declaration
+    : methodInvocation SEMICOLON
+    | classObjectVariableSetter
+    | classObjectVariableGetter
+    | declaration
     | variableAssignment
-    | assignment SEMICOLON
     | loopStatement
     | ifStatement
-    | printStatement SEMICOLON
+    | printStatement
     ;
 
-assignment : ID '=' expression ;
+
 
 expression
     : INT                               #intExpression
-    | DOUBLE                            #doubleExpression
+    |DOUBLE                            #doubleExpression
     | STRING                            #stringExpression
     | CHAR                              #charExpression
     | BOOLEAN                           #booleanExpression
     | ID                                #idExpression
-    | NEW ID                            #newExpression
-    | '(' expression ')'                #parenthesesExpression
+    | classObjectVariableGetter         #classObjectVariableGetterExpression
+    | methodInvocation                  #methodInvocationExpression
+    | LPAREN expression RPAREN          #parenthesesExpression
     | expression intMultiOp expression  #intMultiOpExpression
     | expression intAddOp expression    #intAddOpExpression
     | expression relationOp expression  #relationOpExpression
@@ -52,13 +58,19 @@ whileStatement
 ifStatement : IF LPAREN expression relationOp expression RPAREN controlStructureBody
     (ELSE controlStructureBody)? ;
 
+methodBodyStatement : statement | returnStatement ;
+
+methodStructureBody : LBRACE methodBodyStatement* RBRACE ;
+
 controlStructureBody: LBRACE statement* RBRACE ;
 
-printStatement : (PRINT | PRINTLN) LPAREN expression RPAREN ;
+returnStatement : RETURN expression SEMICOLON ;
+
+printStatement : (PRINT | PRINTLN) LPAREN expression? RPAREN SEMICOLON ;
 
 declaration
-    : methodDeclaration
-    | arrayDeclaration
+    : arrayDeclaration
+    | objectDeclaration
     | variableDeclaration
     ;
 
@@ -66,9 +78,11 @@ classDeclaration : CLASS ID LBRACE (classMember)* RBRACE ;
 
 classConstructor : CONSTRUCTOR LPAREN (methodParams)? RPAREN controlStructureBody ;
 
-methodDeclaration : FUN ID LPAREN (methodParams)? RPAREN (COLON METHOD_TYPE)? LBRACE (statement)* RBRACE ;
+methodDeclaration : FUN ID LPAREN (methodParams)? RPAREN (COLON (TYPE | UNIT))? methodStructureBody ;
 
 arrayDeclaration : VARIABLE ID (COLON ARRAY_TYPE)? ASSIGN (('arrayOf' LPAREN (expression (COMMA expression)*)? RPAREN) | (LBRACE (expression (COMMA expression)*)? RBRACE)) SEMICOLON ;
+
+objectDeclaration : VARIABLE ID ASSIGN (NEW ID LPAREN (methodArgs)? RPAREN) SEMICOLON ;
 
 variableDeclaration : VARIABLE ID (COLON TYPE)? (ASSIGN expression)? SEMICOLON ;
 
@@ -76,11 +90,15 @@ variableAssignment : ID ASSIGN expression SEMICOLON ;
 
 classMember
     : classConstructor
+    | methodDeclaration
     | declaration
     ;
 
+classObjectVariableGetter : ID DOT ID ;
 
-methodInvocation : ID DOT ID LPAREN (methodArgs)? RPAREN ;
+classObjectVariableSetter : ID DOT ID ASSIGN expression SEMICOLON ;
+
+methodInvocation : (ID DOT)? ID LPAREN (methodArgs)? RPAREN ;
 
 methodParams : (ID COLON (TYPE | ARRAY_TYPE) (COMMA ID COLON (TYPE | ARRAY_TYPE))*) ;
 
@@ -90,14 +108,13 @@ methodArgs : (expression (COMMA expression)*) ;
 
 INT     : [0-9]+ ;
 DOUBLE  : [0-9]+ '.' [0-9]+ ;
-STRING : QUOTE .*? QUOTE ;
-CHAR    : '\'' .*? '\'' ;
+STRING  : QUOTE .*? QUOTE ;
+CHAR : APOSTROPHE .? APOSTROPHE ;
 BOOLEAN : 'true' | 'false' ;
-
 
 TYPE    : 'Int' | 'Double' | 'String' | 'Char' | 'Boolean';
 ARRAY_TYPE : 'Array' '<' TYPE '>';
-METHOD_TYPE : TYPE | 'Unit' ;
+
 
 relationOp : '==' | '!=' ;
 intMultiOp : '*' | '/' | '%' ;
@@ -118,6 +135,11 @@ DOT: '.';
 
 PRINT   : 'print';
 PRINTLN : 'println';
+READ_LINE   : 'readLine'; // TODO add read line from console
+READ_FILE    : 'read'; // TODO add read file
+WRITE_FILE   : 'write'; // TODO add write file
+
+UNIT: 'Unit' ;
 IF: 'if' ;
 ELSE: 'else' ;
 FOR: 'for' ;

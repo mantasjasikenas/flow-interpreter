@@ -5,10 +5,10 @@ class Mantelis {
     var b: String;
 
     // if no constructor is defined, default constructor is used
-    /*    constructor(number : Int, text : String) {
+        constructor(number : Int, text : String) {
             a = number;
             b = text;
-        }*/
+        }
 
     fun MantelisMethod(num: String, lol: Int): Unit {
         println();
@@ -29,7 +29,7 @@ class Mantelis {
 
 }
 
-val obj1 = new Mantelis (); // object declaration goes to current scope
+val obj1 = new Mantelis(1,"string1"); // object declaration goes to current scope
 
 obj1.a = 1;
 println(obj1.a);
@@ -60,8 +60,8 @@ println(true == false);
 /*val txt = read();
 println(txt);*/
 
-val txt2 = readLine();
-println(txt2);
+/*val txt2 = readLine();
+println(txt2);*/
 
 val kvk: Int;
 kvk = 55464545;
@@ -76,6 +76,7 @@ obj1.MantelisMethod("MantelisMethod_obj1", 96); // method call
 
 println();
 
+// TODO check if constructor exists
 val obj2 = new Mantelis (88, "ctor_2"); // object declaration goes to current scope
 obj2.MantelisMethod("MantelisMethod_obj2", 66); // method call
 

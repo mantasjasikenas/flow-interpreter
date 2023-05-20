@@ -78,8 +78,8 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
     public void visitClassConstructor(FlowParser.ClassConstructorContext ctx, FlowParser.MethodArgsContext objectArgs) {
 
-        if (ctx == null) {
-            return;
+        if (ctx == null && objectArgs != null && !objectArgs.expression().isEmpty()) {
+            throw new FlowException("Expected no arguments but got " + objectArgs.expression().size() + ".");
         }
 
         symbolTable.pushScope();
@@ -114,7 +114,13 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
     @Override
     public Object visitControlStructureBody(FlowParser.ControlStructureBodyContext ctx) {
-        return super.visitControlStructureBody(ctx);
+        //TODO: new scope for if/else/while/for ...
+
+        symbolTable.pushScope();
+        Object o = super.visitControlStructureBody(ctx);
+        symbolTable.popScope();
+
+        return o;
     }
 
     @Override

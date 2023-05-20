@@ -1,5 +1,7 @@
 package flow.interpreter.scope;
 
+import flow.interpreter.exception.FlowException;
+
 import java.util.Objects;
 
 public class Symbol {
@@ -7,24 +9,18 @@ public class Symbol {
     private Scope scope;
     private final String name;
     private final String type;
+
+    private boolean isMutable = false;
     private Object value;
 
-    public String getName() {
-        return name;
-    }
 
-    public Symbol(String name, Object value, String type) {
+    public Symbol(String name, Object value, String type, boolean isMutable) {
         this.name = name;
         this.value = value;
         this.type = type;
+        this.isMutable = isMutable;
     }
 
-    public Symbol(String name, Object value, String type, Scope scope) {
-        this.name = name;
-        this.value = value;
-        this.type = type;
-        this.scope = scope;
-    }
 
     public Object getValue() {
         return value;
@@ -34,9 +30,13 @@ public class Symbol {
         return type;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public void setValue(Object value) {
-        if (Objects.equals(type, "val"))
-            throw new RuntimeException("Cannot change value of val.");
+        if (!isMutable())
+            throw new FlowException("Cannot assign value to variable: `" + name + "`, variable is immutable");
 
         this.value = value;
     }
@@ -81,4 +81,11 @@ public class Symbol {
     }
 
 
+    public boolean isMutable() {
+        return isMutable;
+    }
+
+    public void setMutable(boolean mutable) {
+        isMutable = mutable;
+    }
 }

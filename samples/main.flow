@@ -1,3 +1,4 @@
+/*
 // class declaration goes to global scope
 class Mantelis {
 
@@ -57,11 +58,15 @@ println("reading done");
 
 println(true == false);
 
+*/
 /*val txt = read();
-println(txt);*/
+println(txt);*//*
 
+
+*/
 /*val txt2 = readLine();
-println(txt2);*/
+println(txt2);*//*
+
 
 val kvk: Int;
 kvk = 55464545;
@@ -87,4 +92,29 @@ setA(5);
 
 println();
 println("Program exited with code 0");
+
+*/
+
+var start: Int = 5;
+val end: Int = 10;
+
+for(a in start..end){
+    println(a);
+}
+
+//println(a);
+
+// should be error OK
+//println(a);
+println(); // prints null?
+while (start <= end){
+    println(start);
+    start = start + 1;
+    val kk: Int = 5;
+}
+
+
+// prints null? should be error
+//println(kk);
+
 

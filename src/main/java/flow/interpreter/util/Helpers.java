@@ -36,6 +36,18 @@ public class Helpers {
         };
     }
 
+    public static boolean resolveCondition(Object left, Object right, String relOp) {
+        return switch (relOp) {
+            case "==" -> left == right;
+            case "!=" -> left != right;
+            case "<" -> (int) left < (int) right;
+            case ">" -> (int) left > (int) right;
+            case "<=" -> (int) left <= (int) right;
+            case ">=" -> (int) left >= (int) right;
+            default -> throw new FlowException("Unsupported relation operator: " + relOp);
+        };
+    }
+
     public static String readFromFile(String path) {
         try {
             return Files.readString(Paths.get(path));

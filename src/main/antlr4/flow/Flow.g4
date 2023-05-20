@@ -140,7 +140,7 @@ TYPE    : 'Int' | 'Double' | 'String' | 'Char' | 'Boolean';
 ARRAY_TYPE : 'Array' '<' TYPE '>';
 
 
-relationOp : '==' | '!=' ;
+relationOp : '==' | '!=' | '<' | '<=' | '>' | '>=' ;
 intMultiOp : '*' | '/' | '%' ;
 intAddOp : '+' | '-' ;
 

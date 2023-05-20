@@ -6,8 +6,12 @@ import flow.FlowParser;
 import flow.interpreter.exception.FlowException;
 import flow.interpreter.scope.*;
 
-import static flow.interpreter.util.Helpers.getClassName;
-import static flow.interpreter.util.Helpers.getObjectDefaultValue;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static flow.interpreter.util.Helpers.*;
 
 public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
@@ -42,6 +46,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         String objectName = ctx.ID().get(0).getText();
         String className = ctx.ID().get(1).getText();
+        boolean isMutable = Objects.equals(ctx.VARIABLE().getText(), "var");
 
         FlowParser.MethodArgsContext objectArgs = ctx.methodArgs();
         ClassDeclaration classDeclaration = symbolTable.getClassDeclaration(className);
@@ -56,7 +61,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             throw new FlowException("Object " + objectName + " already exists.");
         }
 
-        Symbol objectSymbol = new Symbol(objectName, classDeclaration, className);
+        Symbol objectSymbol = new Symbol(objectName, classDeclaration, className, isMutable);
         symbolTable.defineCurrentScopeValue(objectSymbol);
 
         Scope classMembersScope = symbolTable.pushScope();
@@ -103,7 +108,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
                     throw new FlowException("Wrong argument " + argName + " type. Expected " + argType + " but got " + argValue.getClass().getSimpleName() + ".");
                 }
 
-                symbolTable.defineCurrentScopeValue(new Symbol(argName, argValue, argType));
+                symbolTable.defineCurrentScopeValue(new Symbol(argName, argValue, argType, true));
             }
         }
 
@@ -132,6 +137,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     @Override
     public Object visitVariableDeclaration(FlowParser.VariableDeclarationContext ctx) {
         String varName = ctx.ID().getText();
+        boolean isMutable = Objects.equals(ctx.VARIABLE().getText(), "var");
 
         if (ctx.TYPE() == null && ctx.expression() == null) {
             throw new FlowException("Variable `" + varName + "` must have a type or an expression.");
@@ -150,7 +156,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             throw new FlowException("Variable `" + varName + "` is already declared.");
         }
 
-        symbolTable.defineCurrentScopeValue(new Symbol(varName, value, type));
+        symbolTable.defineCurrentScopeValue(new Symbol(varName, value, type, isMutable));
 
         return null;
     }
@@ -346,7 +352,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
                 throw new FlowException("Wrong argument " + argName + " type. Expected " + argType + " but got " + argValue.getClass().getSimpleName() + ".");
             }
 
-            symbolTable.defineCurrentScopeValue(new Symbol(argName, argValue, argType));
+            symbolTable.defineCurrentScopeValue(new Symbol(argName, argValue, argType, true));
         }
     }
 
@@ -386,16 +392,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         return symbol.getValue();
     }
-
-    @Override
-    public Object visitForStatement(FlowParser.ForStatementContext ctx) {
-
-        String name = ctx.ID().getText();
-
-
-        return null;
-    }
-
 
     @Override
     public Object visitIntExpression(FlowParser.IntExpressionContext ctx) {
@@ -496,4 +492,65 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     public Object visitWriteStatement(FlowParser.WriteStatementContext ctx) {
         return this.ioStatementVisitor.visitWriteStatement(ctx);
     }
+
+    @Override
+    public Object visitForStatement(FlowParser.ForStatementContext ctx) {
+
+        List<Integer> range = (List<Integer>) visitRangeExpression(ctx.rangeExpression());
+
+        if (range == null) {
+            throw new FlowException("Range expression must return list of integers.");
+        }
+
+        symbolTable.pushScope();
+        Symbol cycleVariable = new Symbol(ctx.ID().getText(), null, "Int", true);
+        symbolTable.defineCurrentScopeValue(cycleVariable);
+
+        for (Integer i : range) {
+            cycleVariable.setValue(i);
+
+            Object o = visit(ctx.controlStructureBody());
+            if (o != null) {
+                return o;
+            }
+        }
+
+        symbolTable.popScope();
+
+        return null;
+    }
+
+    @Override
+    public Object visitWhileStatement(FlowParser.WhileStatementContext ctx) {
+
+        while ((Boolean) visit(ctx.expression())) {
+            Object o = visit(ctx.controlStructureBody());
+            if (o != null) {
+                return o;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public Object visitRangeExpression(FlowParser.RangeExpressionContext ctx) {
+
+        Object startInclusive = visit(ctx.expression(0));
+        Object endExclusive = visit(ctx.expression(1));
+
+        return IntStream.range((Integer) startInclusive, (Integer) endExclusive).boxed().collect(Collectors.toList());
+    }
+
+    @Override
+    public Object visitRelationOpExpression(FlowParser.RelationOpExpressionContext ctx) {
+
+        Object val1 = visit(ctx.expression(0));
+        Object val2 = visit(ctx.expression(1));
+        String relationOp = ctx.relationOp().getText();
+
+        return resolveCondition(val1, val2, relationOp);
+    }
+
+
 }

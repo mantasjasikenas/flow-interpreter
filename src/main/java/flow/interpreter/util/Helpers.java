@@ -37,14 +37,22 @@ public class Helpers {
     }
 
     public static boolean resolveCondition(Object left, Object right, String relOp) {
+
+        String leftClassName = left.getClass().getSimpleName();
+        String rightClassName = right.getClass().getSimpleName();
+
+        if (!leftClassName.equals(rightClassName)) {
+            throw new FlowException("Cannot compare values of different types: " + leftClassName + " and " + rightClassName);
+        }
+
         return switch (relOp) {
-            case "==" -> left == right;
-            case "!=" -> left != right;
-            case "<" -> (int) left < (int) right;
-            case ">" -> (int) left > (int) right;
-            case "<=" -> (int) left <= (int) right;
-            case ">=" -> (int) left >= (int) right;
-            default -> throw new FlowException("Unsupported relation operator: " + relOp);
+            case "==" -> left.equals(right);
+            case "!=" -> !left.equals(right);
+            case "<" -> ((Comparable<Object>) left).compareTo(right) < 0;
+            case ">" -> ((Comparable<Object>) left).compareTo(right) > 0;
+            case "<=" -> ((Comparable<Object>) left).compareTo(right) <= 0;
+            case ">=" -> ((Comparable<Object>) left).compareTo(right) >= 0;
+            default -> throw new FlowException("Unknown relation operator: " + relOp);
         };
     }
 

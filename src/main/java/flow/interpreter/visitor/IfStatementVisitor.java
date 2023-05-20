@@ -25,9 +25,14 @@ public class IfStatementVisitor extends FlowBaseVisitor<Object> {
         String relOp = relOpNode.getText();
 
         if (resolveCondition(left, right, relOp)) {
-            return parent.visit(ctx.expression(0));
+            return parent.visit(ctx.controlStructureBody(0));
         } else {
-            return parent.visit(ctx.expression(1));
+
+            if (ctx.controlStructureBody().size() == 1) {
+                return null;
+            }
+
+            return parent.visit(ctx.controlStructureBody(1));
         }
     }
 

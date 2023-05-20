@@ -539,7 +539,10 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         Object startInclusive = visit(ctx.expression(0));
         Object endExclusive = visit(ctx.expression(1));
 
-        return IntStream.range((Integer) startInclusive, (Integer) endExclusive).boxed().collect(Collectors.toList());
+        return IntStream
+                .range((Integer) startInclusive, (Integer) endExclusive)
+                .boxed()
+                .collect(Collectors.toList());
     }
 
     @Override

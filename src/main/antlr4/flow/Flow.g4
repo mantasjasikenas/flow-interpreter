@@ -141,6 +141,7 @@ ARRAY_TYPE : 'Array' '<' TYPE '>';
 
 
 relationOp : '==' | '!=' | '<' | '<=' | '>' | '>=' ;
+charRelationOp : '==' | '!=' ;
 intMultiOp : '*' | '/' | '%' ;
 intAddOp : '+' | '-' ;
 

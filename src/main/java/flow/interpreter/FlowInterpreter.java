@@ -126,6 +126,7 @@ public class FlowInterpreter {
         FlowErrorListener errorListener = new FlowErrorListener();
         parser.addErrorListener(errorListener);
 
+
         ParseTree tree = parser.program();
 
         if (errorListener.isHasSyntaxError()) {

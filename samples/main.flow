@@ -113,6 +113,12 @@ while (start <= end){
     val kk: Int = 5;
 }
 
+if (5 == 5) {
+    println("true");
+} else {
+    println("false");
+}
+
 
 // prints null? should be error
 //println(kk);

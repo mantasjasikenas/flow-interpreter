@@ -2,6 +2,8 @@ package flow.interpreter.util;
 
 // declare static class
 
+import flow.interpreter.exception.FlowException;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -23,24 +25,35 @@ public class Helpers {
 
     }
 
+    public static Object getObjectDefaultValue(String type) {
+        return switch (type) {
+            case "Int" -> 0;
+            case "Double" -> 0.0;
+            case "Char" -> '\u0000';
+            case "String" -> "";
+            case "Boolean" -> false;
+            default -> null;
+        };
+    }
+
     public static String readFromFile(String path) {
         try {
             return Files.readString(Paths.get(path));
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new FlowException("Cannot read from file: " + path);
         }
-        return null;
     }
 
     public static void writeToFile(String path, String content) {
         try {
             Files.writeString(Paths.get(path), content);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new FlowException("Cannot write to file: " + path);
         }
     }
 
 
+    // FIXME not working together with readFromConsole
     public static String readLnFromConsole() {
         try {
             Scanner scanner = new Scanner(System.in);
@@ -50,9 +63,8 @@ public class Helpers {
 
             return s;
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new FlowException("Cannot read from console");
         }
-        return null;
     }
 
     public static Character readFromConsole() {
@@ -64,8 +76,7 @@ public class Helpers {
 
             return s;
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new FlowException("Cannot read from console");
         }
-        return null;
     }
 }

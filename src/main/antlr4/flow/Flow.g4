@@ -15,8 +15,7 @@ statement
     | variableAssignment
     | loopStatement
     | ifStatement
-    | printStatement
-    | iOStatement
+    | iOStatement SEMICOLON
     ;
 
 
@@ -30,6 +29,7 @@ expression
     | ID                                #idExpression
     | classObjectVariableGetter         #classObjectVariableGetterExpression
     | methodInvocation                  #methodInvocationExpression
+    | iOStatement                       #iOStatementExpression
     | LPAREN expression RPAREN          #parenthesesExpression
     | expression intMultiOp expression  #intMultiOpExpression
     | expression intAddOp expression    #intAddOpExpression
@@ -61,18 +61,28 @@ ifStatement : IF LPAREN expression relationOp expression RPAREN controlStructure
 
 iOStatement
     : readStatement
-     | readLineStatement
-     | readFileStatement
-     | writeFileStatement
-     | readStatement; // TODO move print statement to IO statement
+    | writeStatement;
 
-readStatement : READ LPAREN RPAREN SEMICOLON ;
+readStatement
+    : readConsoleStatement
+    | readLineConsoleStatement
+    | readFileStatement ;
 
-readLineStatement : READ_LINE LPAREN RPAREN SEMICOLON;
+writeStatement
+    : writeFileStatement
+    | printStatement;
 
-readFileStatement : READ_FILE LPAREN (STRING | ID) RPAREN SEMICOLON ;
 
-writeFileStatement : WRITE_FILE LPAREN (STRING | ID) COMMA (STRING | ID) RPAREN SEMICOLON ;
+readConsoleStatement : READ LPAREN RPAREN ;
+
+readLineConsoleStatement : READ_LINE LPAREN RPAREN;
+
+readFileStatement : READ_FILE LPAREN (STRING | expression) RPAREN ;
+
+printStatement : (PRINT | PRINTLN) LPAREN expression? RPAREN ;
+
+writeFileStatement : WRITE_FILE LPAREN (STRING | expression) COMMA (STRING | expression) RPAREN ;
+
 
 methodBodyStatement : statement | returnStatement ;
 
@@ -81,8 +91,6 @@ methodStructureBody : LBRACE methodBodyStatement* RBRACE ;
 controlStructureBody: LBRACE statement* RBRACE ;
 
 returnStatement : RETURN expression SEMICOLON ;
-
-printStatement : (PRINT | PRINTLN) LPAREN expression? RPAREN SEMICOLON ;
 
 declaration
     : arrayDeclaration
@@ -152,10 +160,9 @@ DOT: '.';
 PRINT   : 'print';
 PRINTLN : 'println';
 READ: 'read';
-READ_LINE   : 'readLine'; // TODO add read line from console
-
-READ_FILE    : 'readFile'; // TODO add read file
-WRITE_FILE   : 'writeFile'; // TODO add write file
+READ_LINE   : 'readLine';
+READ_FILE    : 'readFile';
+WRITE_FILE   : 'writeFile';
 
 UNIT: 'Unit' ;
 IF: 'if' ;

@@ -4,16 +4,14 @@ package flow.interpreter.visitor;
 import flow.FlowBaseVisitor;
 import flow.FlowParser;
 import flow.interpreter.exception.FlowException;
-import flow.interpreter.scope.ClassDeclaration;
-import flow.interpreter.scope.Scope;
-import flow.interpreter.scope.Symbol;
-import flow.interpreter.scope.SymbolTable;
+import flow.interpreter.scope.*;
 
 import static flow.interpreter.util.Helpers.getClassName;
+import static flow.interpreter.util.Helpers.getObjectDefaultValue;
 
 public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
-    private final StringBuilder SYSTEM_OUT = new StringBuilder();
+    protected final StringBuilder SYSTEM_OUT = new StringBuilder();
     protected final SymbolTable symbolTable;
     private final IfStatementVisitor ifStatementVisitor;
     private final IoStatementVisitor ioStatementVisitor;
@@ -134,7 +132,11 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         }
 
         Object value = ctx.expression() != null ? visit(ctx.expression()) : null;
-        String type = ctx.TYPE() != null ? ctx.TYPE().getText() : getClassName(value);
+        String type = value == null ? ctx.TYPE().getText() : getClassName(value);
+
+        if (type != null && value == null) {
+            value = getObjectDefaultValue(type);
+        }
 
         Scope currentScope = symbolTable.currentScope();
 
@@ -147,16 +149,60 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         return null;
     }
 
+
     @Override
     public Object visitMethodInvocation(FlowParser.MethodInvocationContext ctx) {
 
-        String objectName = ctx.ID(0).getText();
-        String methodName = ctx.ID(1).getText();
+        String objectName;
+        String methodName;
+
+        int size = ctx.ID().size();
         FlowParser.MethodArgsContext args = ctx.methodArgs();
 
+        if (size == 1) {
+            objectName = "this";
+            methodName = ctx.ID(0).getText();
+        } else {
+            objectName = ctx.ID(0).getText();
+            methodName = ctx.ID(1).getText();
+        }
+
+
+        // global method
+        if (objectName.equals("this")) {
+            MethodDeclaration methodDeclaration = symbolTable.getGlobalMethod(methodName);
+            FlowParser.MethodDeclarationContext context = methodDeclaration.getMethodDeclarationContext();
+
+            if (methodDeclaration == null) {
+                throw new FlowException("Method " + methodName + " does not exist.");
+            }
+
+            Scope methodScope = symbolTable.pushScope();
+            methodScope.setParent(symbolTable.getScope(0));
+
+            if (args != null) {
+                visitMethodArgs(args, methodDeclaration.getMethodDeclarationContext());
+            }
+            Object returnValue = visit(context.methodStructureBody());
+
+            if (returnValue != null) {
+                if (!context.TYPE().getText().equals(getClassName(returnValue))) {
+                    throw new FlowException("Return type is not the same as method return type.");
+                }
+            }
+
+            symbolTable.popScope();
+
+            return returnValue;
+
+        }
+
+
+        // class method
         Scope currentScope = symbolTable.currentScope();
         Symbol object = currentScope.resolve(objectName);
 
+        // check if object exists
         if (object == null) {
             throw new FlowException("Object " + objectName + " does not exist.");
         }
@@ -194,6 +240,15 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         symbolTable.popScope();
 
         return returnValue;
+    }
+
+    @Override
+    public Object visitMethodDeclaration(FlowParser.MethodDeclarationContext ctx) {
+        String methodName = ctx.ID().getText();
+        String methodType = ctx.TYPE() != null ? ctx.TYPE().getText() : "Unit";
+
+        symbolTable.defineGlobalMethod(new MethodDeclaration(methodName, methodType, ctx));
+        return null;
     }
 
     @Override
@@ -301,6 +356,12 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         if (symbol == null) {
             throw new FlowException("Undeclared variable " + varName + ".");
         }
+
+        if (!symbol.getType().equals(getClassName(value))) {
+            throw new FlowException("Wrong type of variable `" + varName + "`. Expected " + symbol.getType() + " but got " + getClassName(value) + ".");
+        }
+
+
         symbol.setValue(value);
 
         return null;
@@ -329,26 +390,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         return null;
     }
 
-
-    @Override
-    public Object visitPrintStatement(FlowParser.PrintStatementContext ctx) {
-        FlowParser.ExpressionContext expressionContext = ctx.expression();
-        String text;
-
-        if (expressionContext != null) {
-            text = visit(ctx.expression()).toString();
-        } else {
-            text = "";
-        }
-
-        if (ctx.PRINTLN() != null) {
-            SYSTEM_OUT.append("\n");
-        }
-
-        SYSTEM_OUT.append(text);
-
-        return null;
-    }
 
     @Override
     public Object visitIntExpression(FlowParser.IntExpressionContext ctx) {
@@ -416,13 +457,13 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     }
 
     @Override
-    public Object visitReadStatement(FlowParser.ReadStatementContext ctx) {
-        return this.ioStatementVisitor.visitReadStatement(ctx);
+    public Object visitReadConsoleStatement(FlowParser.ReadConsoleStatementContext ctx) {
+        return this.ioStatementVisitor.visitReadConsoleStatement(ctx);
     }
 
     @Override
-    public Object visitReadLineStatement(FlowParser.ReadLineStatementContext ctx) {
-        return this.ioStatementVisitor.visitReadLineStatement(ctx);
+    public Object visitReadLineConsoleStatement(FlowParser.ReadLineConsoleStatementContext ctx) {
+        return this.ioStatementVisitor.visitReadLineConsoleStatement(ctx);
     }
 
     @Override
@@ -433,5 +474,20 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     @Override
     public Object visitWriteFileStatement(FlowParser.WriteFileStatementContext ctx) {
         return this.ioStatementVisitor.visitWriteFileStatement(ctx);
+    }
+
+    @Override
+    public Object visitPrintStatement(FlowParser.PrintStatementContext ctx) {
+        return this.ioStatementVisitor.visitPrintStatement(ctx);
+    }
+
+    @Override
+    public Object visitReadStatement(FlowParser.ReadStatementContext ctx) {
+        return this.ioStatementVisitor.visitReadStatement(ctx);
+    }
+
+    @Override
+    public Object visitWriteStatement(FlowParser.WriteStatementContext ctx) {
+        return this.ioStatementVisitor.visitWriteStatement(ctx);
     }
 }

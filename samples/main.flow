@@ -95,6 +95,7 @@ println("Program exited with code 0");
 
 */
 
+/*
 var start: Int = 5;
 val end: Int = 10;
 
@@ -113,6 +114,7 @@ while (start <= end){
     val kk: Int = 5;
 }
 
+
 if (5 == 5) {
     println("true");
 } else {
@@ -122,5 +124,23 @@ if (5 == 5) {
 
 // prints null? should be error
 //println(kk);
+*/
+
+
+fun setA(num: Int): Int {
+    println(num);
+    println("dibajob");
+    return 15;
+    println("after return");
+}
+
+
+val a = setA(5);
+
+println("Returned value:");
+println(a);
+
+
+
 
 

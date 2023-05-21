@@ -90,7 +90,7 @@ methodStructureBody : LBRACE methodBodyStatement* RBRACE ;
 
 controlStructureBody: LBRACE statement* RBRACE ;
 
-returnStatement : RETURN expression SEMICOLON ;
+returnStatement : RETURN expression? SEMICOLON ;
 
 declaration
     : arrayDeclaration

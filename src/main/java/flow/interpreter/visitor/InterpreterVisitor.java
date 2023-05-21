@@ -195,18 +195,24 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             if (args != null) {
                 visitMethodArgs(args, methodDeclaration.getMethodDeclarationContext());
             }
+
             Object returnValue = visit(context.methodStructureBody());
+            String returnType = context.TYPE() == null ?
+                    context.UNIT().getText() :
+                    context.TYPE().getText();
 
             if (returnValue != null) {
-                if (!context.TYPE().getText().equals(getClassName(returnValue))) {
-                    throw new FlowException("Return type is not the same as method return type.");
+                if (!returnType.equals(getClassName(returnValue))) {
+                    throw new FlowException("Return type is not the same as method return type. Expected " + returnType + " but got " + getClassName(returnValue) + ".");
                 }
+            } else if (!returnType.equals("Unit")) {
+                throw new FlowException("Missing return statement. Expected " + returnType + ".");
             }
+
 
             symbolTable.popScope();
 
             return returnValue;
-
         }
 
 
@@ -240,12 +246,18 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             visitMethodArgs(args, methodDeclaration);
         }
 
+        //TODO test if working
         Object returnValue = visit(methodDeclaration.methodStructureBody());
+        String returnType = methodDeclaration.TYPE() == null ?
+                methodDeclaration.UNIT().getText() :
+                methodDeclaration.TYPE().getText();
 
         if (returnValue != null) {
-            if (!methodDeclaration.TYPE().getText().equals(getClassName(returnValue))) {
-                throw new FlowException("Return type is not the same as method return type.");
+            if (!returnType.equals(getClassName(returnValue))) {
+                throw new FlowException("Return type is not the same as method return type. Expected " + returnType + " but got " + getClassName(returnValue) + ".");
             }
+        } else if (!returnType.equals("Unit")) {
+            throw new FlowException("Missing return statement. Expected " + returnType + ".");
         }
 
 
@@ -268,6 +280,9 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         for (FlowParser.MethodBodyStatementContext methodBodyContext : ctx.methodBodyStatement()) {
             if (methodBodyContext.returnStatement() != null) {
+                if (methodBodyContext.returnStatement().expression() == null) {
+                    return null;
+                }
                 return visit(methodBodyContext.returnStatement().expression());
             }
             visit(methodBodyContext);

@@ -186,6 +186,9 @@ printer1 = printer2;
 printer1.printConsole("same object");
 printer2.printConsole("same object");
 
+printer1.printConsole("Fibonacci of " + value1 + " is " + result1);
+printer2.printConsole("Fibonacci of " + value2 + " is " + result2);
+
 
 /*
 printer1.printConsole("Fibonacci of " + value1 + " is " + result1);

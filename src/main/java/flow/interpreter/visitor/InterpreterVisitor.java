@@ -5,8 +5,6 @@ import flow.FlowBaseVisitor;
 import flow.FlowParser;
 import flow.interpreter.exception.FlowException;
 import flow.interpreter.scope.*;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,12 +20,14 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     protected final SymbolTable symbolTable;
     private final IfStatementVisitor ifStatementVisitor;
     private final IoStatementVisitor ioStatementVisitor;
+    private final ClassVisitor classVisitor;
 
 
     public InterpreterVisitor(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
         this.ifStatementVisitor = new IfStatementVisitor(this);
         this.ioStatementVisitor = new IoStatementVisitor(this);
+        this.classVisitor = new ClassVisitor(this);
     }
 
     @Override
@@ -41,125 +41,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     @Override
     public Object visitGlobalStatement(FlowParser.GlobalStatementContext ctx) {
         return super.visitGlobalStatement(ctx);
-    }
-
-    @Override
-    public Object visitClassDeclaration(FlowParser.ClassDeclarationContext ctx) {
-        symbolTable.defineClass(new ClassDeclaration(ctx.ID().getText(), ctx));
-        return null;
-    }
-
-    @Override
-    public Object visitObjectDeclaration(FlowParser.ObjectDeclarationContext ctx) {
-
-        String objectName = ctx.ID().get(0).getText();
-        String className = ctx.ID().get(1).getText();
-        boolean isMutable = false;
-
-        // means assignment
-        if(ctx.VARIABLE() == null) {
-            Symbol symbol = symbolTable.resolve(objectName);
-            if (symbol == null) {
-                throw new FlowException("Cannot assign to undeclared variable " + objectName);
-            }
-
-            if (symbol.isMutable()) {
-                isMutable = true;
-            }
-            else {
-                throw new FlowException("Cannot assign to immutable variable " + objectName);
-            }
-
-            symbolTable.remove(objectName);
-        }
-        else {
-            isMutable = Objects.equals(ctx.VARIABLE().getText(), "var");
-        }
-
-
-        FlowParser.MethodArgsContext objectArgs = ctx.methodArgs();
-        ClassDeclaration classDeclaration = symbolTable.getClassDeclaration(className);
-
-        if (classDeclaration == null) {
-            throw new FlowException("Class " + className + " does not exist.");
-        }
-
-        Scope currentScope = symbolTable.currentScope();
-
-        if (currentScope.resolve(objectName) != null) {
-            throw new FlowException("Object " + objectName + " already exists.");
-        }
-
-        Symbol objectSymbol = new Symbol(objectName, classDeclaration, className, isMutable);
-        symbolTable.defineCurrentScopeValue(objectSymbol);
-
-        ClassScope classMembersScope = symbolTable.pushClassScope();
-        classMembersScope.setScopeName(objectName);
-        objectSymbol.setScope(classMembersScope);
-        classDeclaration.getClassFieldsContext().forEach(this::visit);
-
-        List<FlowParser.MethodDeclarationContext> methodsContext = classDeclaration.getMethodDeclarationContext();
-        methodsContext.forEach(methodContext -> {
-            String methodName = methodContext.ID().getText();
-            String methodType = methodContext.TYPE() == null ?
-                    methodContext.UNIT().getText() :
-                    methodContext.TYPE().getText();
-            classMembersScope.defineMethod(new MethodDeclaration(methodName, methodType, methodContext));
-        });
-
-
-        FlowParser.ClassConstructorContext classConstructorContext = classDeclaration.getConstructorDeclarationContext();
-        visitClassConstructor(classConstructorContext, objectArgs);
-
-        symbolTable.popScope();
-
-        return null;
-    }
-
-
-    @Override
-    public Object visitClassConstructor(FlowParser.ClassConstructorContext ctx) {
-        return null;
-    }
-
-    public void visitClassConstructor(FlowParser.ClassConstructorContext ctx, FlowParser.MethodArgsContext objectArgs) {
-
-        if (ctx == null && objectArgs != null && !objectArgs.expression().isEmpty()) {
-            throw new FlowException("Expected no arguments but got " + objectArgs.expression().size() + ".");
-        }
-
-        if (ctx == null) {
-            return;
-        }
-
-        symbolTable.pushLocalScope();
-
-        if (objectArgs == null) {
-            if (!ctx.methodParams().ID().isEmpty()) {
-                throw new FlowException("Wrong number of arguments.");
-            }
-        } else {
-            if (objectArgs.expression().size() != ctx.methodParams().ID().size()) {
-                throw new FlowException("Wrong number of arguments.");
-            }
-
-            for (int i = 0; i < objectArgs.expression().size(); i++) {
-                String argName = ctx.methodParams().ID(i).getText();
-                String argType = ctx.methodParams().TYPE(i).getText();
-                Object argValue = visit(objectArgs.expression(i));
-
-                // check if argType is same as argValue type
-                if (!argType.equals("Unit") && !argType.equals(getClassName(argValue))) {
-                    throw new FlowException("Wrong argument " + argName + " type. Expected " + argType + " but got " + argValue.getClass().getSimpleName() + ".");
-                }
-
-                symbolTable.defineCurrentScopeValue(new Symbol(argName, argValue, argType, true));
-            }
-        }
-
-        visit(ctx.controlStructureBody());
-        symbolTable.popScope();
-
     }
 
     @Override
@@ -182,12 +63,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         return o;
     }
-
-    @Override
-    public Object visitClassMember(FlowParser.ClassMemberContext ctx) {
-        return super.visitClassMember(ctx);
-    }
-
 
     @Override
     public Object visitVariableDeclaration(FlowParser.VariableDeclarationContext ctx) {
@@ -216,7 +91,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         return null;
     }
-
 
     @Override
     public Object visitMethodInvocation(FlowParser.MethodInvocationContext ctx) {
@@ -322,7 +196,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         return args;
     }
 
-
     public Object visitMethodParams(FlowParser.MethodParamsContext ctx, List<Object> args) {
         if (ctx == null || ctx.ID() == null) {
             return null;
@@ -422,81 +295,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     }
 
     @Override
-    public Object visitClassObjectVariableSetter(FlowParser.ClassObjectVariableSetterContext ctx) {
-
-        String objectName = ctx.ID(0).getText();
-        String variableName = ctx.ID(1).getText();
-        Object value = visit(ctx.expression());
-
-        Scope currentScope = symbolTable.currentScope();
-        Symbol object = currentScope.resolve(objectName);
-
-        if (object == null) {
-            throw new FlowException("Object `" + objectName + "` is not declared.");
-        }
-
-        // get object class scope
-        Scope classScope = object.getScope();
-        Symbol variable = classScope.resolve(variableName);
-
-        if (variable == null) {
-            throw new FlowException("Variable `" + variableName + "` is not declared.");
-        }
-
-        if (!variable.getType().equals(getClassName(value))) {
-            throw new FlowException("Wrong type of variable `" + variableName + "`. Expected " + variable.getType() + " but got " + getClassName(value) + ".");
-        }
-
-        variable.setValue(value);
-
-
-        return null;
-    }
-
-    @Override
-    public Object visitClassObjectVariableGetter(FlowParser.ClassObjectVariableGetterContext ctx) {
-
-        String objectName = ctx.ID(0).getText();
-        String variableName = ctx.ID(1).getText();
-
-        Scope currentScope = symbolTable.currentScope();
-        Symbol object = currentScope.resolve(objectName);
-
-        if (object == null) {
-            throw new FlowException("Object `" + objectName + "` is not declared.");
-        }
-
-        Scope classScope = object.getScope();
-        Symbol variable = classScope.resolve(variableName);
-
-        if (variable == null) {
-            throw new FlowException("Variable `" + variableName + "` is not declared.");
-        }
-
-        return variable.getValue();
-    }
-
-    public void visitMethodArgs(FlowParser.MethodArgsContext ctx, FlowParser.MethodDeclarationContext methodDeclaration) {
-
-        if (ctx.expression().size() != methodDeclaration.methodParams().ID().size()) {
-            throw new FlowException("Wrong number of arguments.");
-        }
-
-        for (int i = 0; i < ctx.expression().size(); i++) {
-            String argName = methodDeclaration.methodParams().ID(i).getText();
-            String argType = methodDeclaration.methodParams().TYPE(i).getText();
-            Object argValue = visit(ctx.expression(i));
-
-            // check if argType is same as argValue type
-            if (!argType.equals("Unit") && !argType.equals(getClassName(argValue))) {
-                throw new FlowException("Wrong argument " + argName + " type. Expected " + argType + " but got " + argValue.getClass().getSimpleName() + ".");
-            }
-
-            symbolTable.defineCurrentScopeValue(new Symbol(argName, argValue, argType, true));
-        }
-    }
-
-    @Override
     public Object visitVariableAssignment(FlowParser.VariableAssignmentContext ctx) {
         String varName = ctx.ID().getText();
         Object value = visit(ctx.expression());
@@ -509,11 +307,11 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             throw new FlowException("Undeclared variable " + varName + ".");
         }
 
-        if(value.getClass() == ClassDeclaration.class){
+        if (value.getClass() == ClassDeclaration.class) {
             String oldClassName = ((ClassDeclaration) value).getClassName();
             String newClassName = symbol.getType();
 
-            if(!oldClassName.equals(newClassName)){
+            if (!oldClassName.equals(newClassName)) {
                 throw new FlowException("Wrong type of variable `" + varName + "`. Expected " + newClassName + " but got " + oldClassName + ".");
             }
 
@@ -612,7 +410,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         throw new FlowException("Wrong type of arguments in expression. Expected String, Int or Double but got " + type1 + ".");
     }
-
 
     @Override
     public Object visitIfStatement(FlowParser.IfStatementContext ctx) {
@@ -768,4 +565,35 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         return null;
     }
+
+    @Override
+    public Object visitClassDeclaration(FlowParser.ClassDeclarationContext ctx) {
+        return classVisitor.visitClassDeclaration(ctx);
+    }
+
+    @Override
+    public Object visitObjectDeclaration(FlowParser.ObjectDeclarationContext ctx) {
+        return classVisitor.visitObjectDeclaration(ctx);
+    }
+
+    @Override
+    public Object visitClassConstructor(FlowParser.ClassConstructorContext ctx) {
+        return classVisitor.visitClassConstructor(ctx);
+    }
+
+    @Override
+    public Object visitClassMember(FlowParser.ClassMemberContext ctx) {
+        return classVisitor.visitClassMember(ctx);
+    }
+
+    @Override
+    public Object visitClassObjectVariableSetter(FlowParser.ClassObjectVariableSetterContext ctx) {
+        return classVisitor.visitClassObjectVariableSetter(ctx);
+    }
+
+    @Override
+    public Object visitClassObjectVariableGetter(FlowParser.ClassObjectVariableGetterContext ctx) {
+        return classVisitor.visitClassObjectVariableGetter(ctx);
+    }
+
 }

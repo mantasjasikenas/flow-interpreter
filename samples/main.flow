@@ -138,52 +138,54 @@ if (5 == 5) {
 val a = setA(5);
 
 println("Returned value:");
-println(a);*/
+println(a);
+
+println(toString(5));
+*/
 
 
+class Printer {
+    // allow to assign value to val in constructor
+    var header: String;
+
+    constructor(text: String) {
+        header = text;
+    }
+
+    fun printConsole(text: String): Unit {
+        println("Object " + header + " " + text);
+    }
+}
 
 
 class Calculator {
+
     fun fibonacci(n: Int): Int {
         if (n <= 1) {
             return n;
         }
 
-        writeToConsole(n);
-
         return fibonacci(n - 1) + fibonacci(n - 2);
     }
-
-    fun writeToConsole(number: Int): Unit {
-        println("Writer:" + number);
-    }
-
 }
 
-
-
+val value1 = 10;
+val value2 = 20;
 
 val calculator = new Calculator();
 
-val count = 10;
-val returnedValue = calculator.fibonacci(count);
-calculator.writeToConsole(returnedValue);
+val result1 = calculator.fibonacci(value1);
+val result2 = calculator.fibonacci(value2);
 
-println(returnedValue);
+val header1 = "Fibonacci_1";
+val header2 = "Fibonacci_2";
 
-println("Program exited with code " + returnedValue + ".");
+val printer1 = new Printer(header1);
+val printer2 = new Printer(header2);
+
+printer1.printConsole("Fibonacci of " + value1 + " is " + result1);
+printer2.printConsole("Fibonacci of " + value2 + " is " + result2);
 
 
-fun fibonacci(n: Int): Int {
-    if (n <= 1) {
-        return n;
-    }
 
-    calculator.writeToConsole(n);
-
-    return fibonacci(n - 1) + fibonacci(n - 2);
-}
-
-val fib = fibonacci(3);
-println(fib);
 

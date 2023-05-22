@@ -28,6 +28,7 @@ expression
     | CHAR                              #charExpression
     | BOOLEAN                           #booleanExpression
     | ID                                #idExpression
+    | TO_STRING LPAREN expression RPAREN #convertToStringExpression
     | classObjectVariableGetter         #classObjectVariableGetterExpression
     | methodInvocation                  #methodInvocationExpression
     | iOStatement                       #iOStatementExpression
@@ -138,11 +139,11 @@ BOOLEAN : 'true' | 'false' ;
 
 TYPE    : 'Int' | 'Double' | 'String' | 'Char' | 'Boolean';
 ARRAY_TYPE : 'Array' '<' TYPE '>';
+TO_STRING : 'toString' ;
 
 
 relationOp : '==' | '!=' | '<' | '<=' | '>' | '>=' ;
 numbersOp : '*' | '/' | '%' | '+' | '-' ;
-stringConcatOp : '+' ;
 
 ASSIGN: '=' ;
 SEMICOLON: ';' ;

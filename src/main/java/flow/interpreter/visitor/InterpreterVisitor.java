@@ -237,10 +237,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
             FlowParser.MethodDeclarationContext context = methodDeclaration.getMethodDeclarationContext();
 
-            if (methodDeclaration == null) {
-                throw new FlowException("Method " + methodName + " does not exist.");
-            }
-
             List<Object> args = (List<Object>) visitMethodArgs(argsContext);
 
             Scope methodScope = symbolTable.pushLocalScope();
@@ -253,8 +249,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         }
 
 
-        // FIXME there is a bug here
-
+        // class method
         Symbol object = currentScope.resolve(objectName);
 
         // check if object exists
@@ -291,6 +286,10 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         List<Object> args = new ArrayList<>();
 
+        if (ctx == null || ctx.expression() == null) {
+            return args;
+        }
+
         for (FlowParser.ExpressionContext expressionContext : ctx.expression()) {
             Object result = visit(expressionContext);
             args.add(result);
@@ -301,6 +300,9 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
 
     public Object visitMethodParams(FlowParser.MethodParamsContext ctx, List<Object> args) {
+        if (ctx == null || ctx.ID() == null) {
+            return null;
+        }
 
         if (ctx.ID().size() != args.size()) {
             throw new FlowException("Wrong number of arguments. Expected " + ctx.ID().size() + " but got " + args.size() + ".");
@@ -486,7 +488,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         if (!symbol.getType().equals(getClassName(value))) {
             throw new FlowException("Wrong type of variable `" + varName + "`. Expected " + symbol.getType() + " but got " + getClassName(value) + ".");
         }
-
 
         symbol.setValue(value);
 
@@ -676,5 +677,15 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         return resolveCondition(val1, val2, relationOp);
     }
 
+    @Override
+    public Object visitConvertToStringExpression(FlowParser.ConvertToStringExpressionContext ctx) {
 
+        Object value = visit(ctx.expression());
+
+        if (value == null) {
+            throw new FlowException("Cannot convert value to string.");
+        }
+
+        return value.toString();
+    }
 }

@@ -127,7 +127,7 @@ if (5 == 5) {
 */
 
 
-fun setA(num: Int): Int {
+/*fun setA(num: Int): Int {
     println(num);
     println("dibajob");
     return 15;
@@ -138,9 +138,32 @@ fun setA(num: Int): Int {
 val a = setA(5);
 
 println("Returned value:");
-println(a);
+println(a);*/
+
+/*fun fibonacci(n: Int): Int {
+    if (n <= 1) {
+        return n + 1;
+    }
+
+    println("gg");
+    return 10;
+}
+
+val fib = fibonacci(0);
+println(fib);*/
 
 
+fun fibonacci(n: Int): Int {
+    if (n <= 1) {
+        return n;
+    }
+
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
 
 
+val count = 10;
+val returnedValue = fibonacci(count);
+
+println(returnedValue);
 

@@ -14,6 +14,7 @@ statement
     | declaration
     | variableAssignment
     | loopStatement
+    | returnStatement
     | ifStatement
     | iOStatement SEMICOLON
     ;
@@ -84,7 +85,7 @@ printStatement : (PRINT | PRINTLN) LPAREN expression? RPAREN ;
 writeFileStatement : WRITE_FILE LPAREN (STRING | expression) COMMA (STRING | expression) RPAREN ;
 
 
-methodBodyStatement : statement | returnStatement ;
+methodBodyStatement : statement;
 
 methodStructureBody : LBRACE methodBodyStatement* RBRACE ;
 

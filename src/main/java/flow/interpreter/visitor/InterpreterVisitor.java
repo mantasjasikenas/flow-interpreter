@@ -6,6 +6,7 @@ import flow.FlowParser;
 import flow.interpreter.exception.FlowException;
 import flow.interpreter.scope.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -119,10 +120,20 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
     @Override
     public Object visitControlStructureBody(FlowParser.ControlStructureBodyContext ctx) {
-        //TODO: new scope for if/else/while/for ...
+
+        Object o = null;
 
         symbolTable.pushScope();
-        Object o = super.visitControlStructureBody(ctx);
+
+        for (FlowParser.StatementContext statementContext : ctx.statement()) {
+            o = visit(statementContext);
+
+            if (o != null) {
+                symbolTable.popScope();
+                return o;
+            }
+        }
+
         symbolTable.popScope();
 
         return o;
@@ -169,7 +180,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         String methodName;
 
         int size = ctx.ID().size();
-        FlowParser.MethodArgsContext args = ctx.methodArgs();
+        FlowParser.MethodArgsContext argsContext = ctx.methodArgs();
 
         if (size == 1) {
             objectName = "this";
@@ -189,34 +200,25 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
                 throw new FlowException("Method " + methodName + " does not exist.");
             }
 
+
+            List<Object> args = (List<Object>) visitMethodArgs(argsContext);
+
             Scope methodScope = symbolTable.pushScope();
             methodScope.setParent(symbolTable.getScope(0));
 
-            if (args != null) {
-                visitMethodArgs(args, methodDeclaration.getMethodDeclarationContext());
-            }
+            visitMethodParams(methodDeclaration.getMethodDeclarationContext().methodParams(), args);
 
-            Object returnValue = visit(context.methodStructureBody());
-            String returnType = context.TYPE() == null ?
-                    context.UNIT().getText() :
-                    context.TYPE().getText();
+            if (argsContext != null) {
+                //visitMethodArgs(argsContext, methodDeclaration.getMethodDeclarationContext());
 
-            if (returnValue != null) {
-                if (!returnType.equals(getClassName(returnValue))) {
-                    throw new FlowException("Return type is not the same as method return type. Expected " + returnType + " but got " + getClassName(returnValue) + ".");
-                }
-            } else if (!returnType.equals("Unit")) {
-                throw new FlowException("Missing return statement. Expected " + returnType + ".");
             }
 
 
-            symbolTable.popScope();
-
-            return returnValue;
+            return getMethodReturnValue(methodName, context);
         }
 
 
-        // class method
+        // FIXME class method
         Scope currentScope = symbolTable.currentScope();
         Symbol object = currentScope.resolve(objectName);
 
@@ -242,15 +244,67 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         Scope methodScope = symbolTable.pushScope();
         methodScope.setParent(classScope);
 
-        if (args != null) {
-            visitMethodArgs(args, methodDeclaration);
+        if (argsContext != null) {
+            visitMethodArgs(argsContext, methodDeclaration);
         }
 
-        //TODO test if working
+
+        return getMethodReturnValue(methodName, methodDeclaration);
+    }
+
+    @Override
+    public Object visitMethodArgs(FlowParser.MethodArgsContext ctx) {
+
+        List<Object> args = new ArrayList<>();
+
+        for (FlowParser.ExpressionContext expressionContext : ctx.expression()) {
+            Object result = visit(expressionContext);
+            args.add(result);
+        }
+
+        return args;
+    }
+
+
+    public Object visitMethodParams(FlowParser.MethodParamsContext ctx, List<Object> args) {
+
+        if (ctx.ID().size() != args.size()) {
+            throw new FlowException("Wrong number of arguments. Expected " + ctx.ID().size() + " but got " + args.size() + ".");
+        }
+
+        for (int i = 0; i < ctx.ID().size(); i++) {
+            String paramName = ctx.ID(i).getText();
+            String paramType = ctx.TYPE(i).getText();
+            Object argValue = args.get(i);
+
+            // check if argType is same as argValue type
+            if (!paramType.equals("Unit") && !paramType.equals(getClassName(argValue))) {
+                throw new FlowException("Wrong argument " + paramName + " type. Expected " + paramType + " but got " + argValue.getClass().getSimpleName() + ".");
+            }
+
+            symbolTable.defineCurrentScopeValue(new Symbol(paramName, argValue, paramType, true));
+        }
+
+
+        return null;
+    }
+
+    private Object getMethodReturnValue(String methodName, FlowParser.MethodDeclarationContext methodDeclaration) {
         Object returnValue = visit(methodDeclaration.methodStructureBody());
         String returnType = methodDeclaration.TYPE() == null ?
                 methodDeclaration.UNIT().getText() :
                 methodDeclaration.TYPE().getText();
+
+        List<FlowParser.MethodBodyStatementContext> bodyStatements = methodDeclaration
+                .methodStructureBody()
+                .methodBodyStatement();
+
+        FlowParser.MethodBodyStatementContext lastStatement = bodyStatements.get(bodyStatements.size() - 1);
+        FlowParser.ReturnStatementContext returnStatementContext = lastStatement.statement().returnStatement();
+
+        if (!returnType.equals("Unit") && returnStatementContext == null) {
+            throw new FlowException("Missing return statement in `" + methodName + "` method. Expected return type `" + returnType + "`.");
+        }
 
         if (returnValue != null) {
             if (!returnType.equals(getClassName(returnValue))) {
@@ -278,22 +332,33 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     @Override
     public Object visitMethodStructureBody(FlowParser.MethodStructureBodyContext ctx) {
 
+        Object returnedValue = null;
+
         for (FlowParser.MethodBodyStatementContext methodBodyContext : ctx.methodBodyStatement()) {
-            if (methodBodyContext.returnStatement() != null) {
-                if (methodBodyContext.returnStatement().expression() == null) {
+            if (methodBodyContext.statement().returnStatement() != null) {
+                if (methodBodyContext.statement().returnStatement().expression() == null) {
                     return null;
                 }
-                return visit(methodBodyContext.returnStatement().expression());
+                return visit(methodBodyContext.statement().returnStatement().expression());
             }
-            visit(methodBodyContext);
+            returnedValue = visit(methodBodyContext);
+
+            if (returnedValue != null) {
+                return returnedValue;
+            }
+
         }
 
-        return null;
+        return returnedValue;
     }
 
     @Override
     public Object visitReturnStatement(FlowParser.ReturnStatementContext ctx) {
-        return super.visitReturnStatement(ctx);
+        if (ctx.expression() == null) {
+            return null;
+        }
+
+        return visit(ctx.expression());
     }
 
     @Override
@@ -443,6 +508,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     public Object visitIntAddOpExpression(FlowParser.IntAddOpExpressionContext ctx) {
         Object val1 = visit(ctx.expression(0));
         Object val2 = visit(ctx.expression(1));
+
         return switch (ctx.intAddOp().getText()) {
             case "+" -> (Integer) val1 + (Integer) val2;
             case "-" -> (Integer) val1 - (Integer) val2;

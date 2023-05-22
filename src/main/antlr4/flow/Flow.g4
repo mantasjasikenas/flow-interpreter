@@ -96,7 +96,7 @@ controlStructureBody: LBRACE statement* RBRACE ;
 returnStatement : RETURN expression? SEMICOLON ;
 
 declaration
-    :  objectDeclaration
+    : objectDeclaration
     | variableDeclaration
     ;
 
@@ -106,7 +106,7 @@ classConstructor : CONSTRUCTOR LPAREN (methodParams)? RPAREN controlStructureBod
 
 methodDeclaration : FUN ID LPAREN (methodParams)? RPAREN (COLON (TYPE | UNIT))? methodStructureBody ;
 
-objectDeclaration : VARIABLE ID ASSIGN (NEW ID LPAREN (methodArgs)? RPAREN) SEMICOLON ;
+objectDeclaration : VARIABLE? ID ASSIGN (NEW ID LPAREN (methodArgs)? RPAREN) SEMICOLON ;
 
 variableDeclaration : VARIABLE ID (COLON TYPE)? (ASSIGN expression)? SEMICOLON ;
 

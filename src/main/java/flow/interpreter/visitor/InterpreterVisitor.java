@@ -5,6 +5,8 @@ import flow.FlowBaseVisitor;
 import flow.FlowParser;
 import flow.interpreter.exception.FlowException;
 import flow.interpreter.scope.*;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +54,28 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         String objectName = ctx.ID().get(0).getText();
         String className = ctx.ID().get(1).getText();
-        boolean isMutable = Objects.equals(ctx.VARIABLE().getText(), "var");
+        boolean isMutable = false;
+
+        // means assignment
+        if(ctx.VARIABLE() == null) {
+            Symbol symbol = symbolTable.resolve(objectName);
+            if (symbol == null) {
+                throw new FlowException("Cannot assign to undeclared variable " + objectName);
+            }
+
+            if (symbol.isMutable()) {
+                isMutable = true;
+            }
+            else {
+                throw new FlowException("Cannot assign to immutable variable " + objectName);
+            }
+
+            symbolTable.remove(objectName);
+        }
+        else {
+            isMutable = Objects.equals(ctx.VARIABLE().getText(), "var");
+        }
+
 
         FlowParser.MethodArgsContext objectArgs = ctx.methodArgs();
         ClassDeclaration classDeclaration = symbolTable.getClassDeclaration(className);
@@ -485,6 +508,21 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         if (symbol == null) {
             throw new FlowException("Undeclared variable " + varName + ".");
         }
+
+        if(value.getClass() == ClassDeclaration.class){
+            String oldClassName = ((ClassDeclaration) value).getClassName();
+            String newClassName = symbol.getType();
+
+            if(!oldClassName.equals(newClassName)){
+                throw new FlowException("Wrong type of variable `" + varName + "`. Expected " + newClassName + " but got " + oldClassName + ".");
+            }
+
+            Symbol newSymbol = currentScope.resolve(ctx.expression().getText());
+            symbol.setScope(newSymbol.getScope());
+
+            return null;
+        }
+
 
         if (!symbol.getType().equals(getClassName(value))) {
             throw new FlowException("Wrong type of variable `" + varName + "`. Expected " + symbol.getType() + " but got " + getClassName(value) + ".");

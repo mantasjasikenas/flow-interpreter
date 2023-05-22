@@ -99,6 +99,10 @@ public class SymbolTable {
         return currentScope().resolve(name);
     }
 
+    public void remove(String name) {
+        currentScope().remove(name);
+    }
+
     private int nextGenId() {
         genId++;
         return genId;

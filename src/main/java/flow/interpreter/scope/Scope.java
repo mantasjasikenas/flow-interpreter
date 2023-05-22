@@ -67,4 +67,8 @@ public class Scope {
     public void setScopeName(String scopeName) {
         this.scopeName = scopeName;
     }
+
+    public void remove(String name) {
+        symbolTable.remove(name);
+    }
 }

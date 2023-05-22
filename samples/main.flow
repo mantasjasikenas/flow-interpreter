@@ -81,7 +81,6 @@ obj1.MantelisMethod("MantelisMethod_obj1", 96); // method call
 
 println();
 
-// TODO check if constructor exists
 val obj2 = new Mantelis (88, "ctor_2"); // object declaration goes to current scope
 obj2.MantelisMethod("MantelisMethod_obj2", 66); // method call
 
@@ -146,7 +145,7 @@ println(toString(5));
 
 class Printer {
     // allow to assign value to val in constructor
-    var header: String;
+    val header: String;
 
     constructor(text: String) {
         header = text;
@@ -185,6 +184,24 @@ val printer2 = new Printer(header2);
 
 printer1.printConsole("Fibonacci of " + value1 + " is " + result1);
 printer2.printConsole("Fibonacci of " + value2 + " is " + result2);
+
+/*printer1.header = "Fibonacci_1_new";
+printer2.header = "Fibonacci_2_new";
+
+println();
+printer1.printConsole("Fibonacci of " + value1 + " is " + result1);
+printer2.printConsole("Fibonacci of " + value2 + " is " + result2);*/
+
+
+try {
+    val a : String;
+    println(a);
+}
+
+
+
+println("Program exited with code 0");
+
 
 
 

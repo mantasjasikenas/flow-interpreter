@@ -13,6 +13,7 @@ statement
     | classObjectVariableGetter
     | declaration
     | variableAssignment
+    | tryStatement
     | loopStatement
     | returnStatement
     | ifStatement
@@ -37,6 +38,7 @@ expression
     | expression relationOp expression  #relationOpExpression
     ;
 
+tryStatement : TRY controlStructureBody (CATCH controlStructureBody)? ;
 
 loopStatement
     : forStatement
@@ -166,6 +168,8 @@ READ_FILE    : 'readFile';
 WRITE_FILE   : 'writeFile';
 
 UNIT: 'Unit' ;
+TRY: 'try' ;
+CATCH: 'catch' ;
 IF: 'if' ;
 ELSE: 'else' ;
 FOR: 'for' ;

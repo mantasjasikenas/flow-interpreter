@@ -75,7 +75,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         objectSymbol.setScope(classMembersScope);
         classDeclaration.getClassFieldsContext().forEach(this::visit);
 
-        // TODO new code
         List<FlowParser.MethodDeclarationContext> methodsContext = classDeclaration.getMethodDeclarationContext();
         methodsContext.forEach(methodContext -> {
             String methodName = methodContext.ID().getText();
@@ -93,6 +92,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         return null;
     }
+
 
     @Override
     public Object visitClassConstructor(FlowParser.ClassConstructorContext ctx) {
@@ -178,9 +178,10 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         Object value = ctx.expression() != null ? visit(ctx.expression()) : null;
         String type = value == null ? ctx.TYPE().getText() : getClassName(value);
 
-        if (type != null && value == null) {
+        // QS Removed default value for type
+/*        if (type != null && value == null) {
             value = getObjectDefaultValue(type);
-        }
+        }*/
 
         Scope currentScope = symbolTable.currentScope();
 
@@ -496,8 +497,6 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
     @Override
     public Object visitIdExpression(FlowParser.IdExpressionContext ctx) {
-
-
         Scope currentScope = symbolTable.currentScope();
         Symbol symbol = currentScope.resolve(ctx.ID().getText());
 
@@ -505,7 +504,14 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             throw new FlowException("Undeclared variable " + ctx.ID().getText() + ".");
         }
 
-        return symbol.getValue();
+        Object value = symbol.getValue();
+
+        // QS default value for variables
+        if (value == null) {
+            throw new FlowException("Variable " + ctx.ID().getText() + " is not initialized.");
+        }
+
+        return value;
     }
 
     @Override
@@ -687,5 +693,29 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         }
 
         return value.toString();
+    }
+
+    @Override
+    public Object visitTryStatement(FlowParser.TryStatementContext ctx) {
+
+        try {
+            Object o = visit(ctx.controlStructureBody(0));
+            if (o != null) {
+                return o;
+            }
+        } catch (FlowException e) {
+            if (ctx.controlStructureBody().size() > 1) {
+                Object o = visit(ctx.controlStructureBody(1));
+                if (o != null) {
+                    return o;
+                }
+            } else {
+                SYSTEM_OUT.append("\n\u001B[31mFlowException caught: ")
+                        .append(e.getMessage())
+                        .append("\u001B[0m");
+            }
+        }
+
+        return null;
     }
 }

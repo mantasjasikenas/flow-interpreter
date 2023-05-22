@@ -35,8 +35,8 @@ public class Symbol {
     }
 
     public void setValue(Object value) {
-        if (!isMutable())
-            throw new FlowException("Cannot assign value to variable: `" + name + "`, variable is immutable");
+        if (!isMutable() && this.value != null)
+            throw new FlowException("Cannot assign value " + value + " to immutable variable " + name);
 
         this.value = value;
     }

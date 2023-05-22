@@ -12,7 +12,6 @@ public class FlowErrorListener extends BaseErrorListener {
 
     @Override
     public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-        //TODO bad. Override DefaultErrorStrategy instead? https://stackoverflow.com/a/18139305
         if (msg.startsWith("mismatched input '<EOF>'") || msg.matches("missing '.*' at '<EOF>'")) {
             isPartialTree = true;
         } else {

@@ -96,8 +96,7 @@ controlStructureBody: LBRACE statement* RBRACE ;
 returnStatement : RETURN expression? SEMICOLON ;
 
 declaration
-    : arrayDeclaration
-    | objectDeclaration
+    :  objectDeclaration
     | variableDeclaration
     ;
 
@@ -106,8 +105,6 @@ classDeclaration : CLASS ID LBRACE (classMember)* RBRACE ;
 classConstructor : CONSTRUCTOR LPAREN (methodParams)? RPAREN controlStructureBody ;
 
 methodDeclaration : FUN ID LPAREN (methodParams)? RPAREN (COLON (TYPE | UNIT))? methodStructureBody ;
-
-arrayDeclaration : VARIABLE ID (COLON ARRAY_TYPE)? ASSIGN (('arrayOf' LPAREN (expression (COMMA expression)*)? RPAREN) | (LBRACE (expression (COMMA expression)*)? RBRACE)) SEMICOLON ;
 
 objectDeclaration : VARIABLE ID ASSIGN (NEW ID LPAREN (methodArgs)? RPAREN) SEMICOLON ;
 
@@ -127,7 +124,7 @@ classObjectVariableSetter : ID DOT ID ASSIGN expression SEMICOLON ;
 
 methodInvocation : (ID DOT)? ID LPAREN (methodArgs)? RPAREN ;
 
-methodParams : (ID COLON (TYPE | ARRAY_TYPE) (COMMA ID COLON (TYPE | ARRAY_TYPE))*) ;
+methodParams : (ID COLON (TYPE) (COMMA ID COLON (TYPE))*) ;
 
 methodArgs : (expression (COMMA expression)*) ;
 
@@ -140,9 +137,7 @@ CHAR : APOSTROPHE .? APOSTROPHE ;
 BOOLEAN : 'true' | 'false' ;
 
 TYPE    : 'Int' | 'Double' | 'String' | 'Char' | 'Boolean';
-ARRAY_TYPE : 'Array' '<' TYPE '>';
 TO_STRING : 'toString' ;
-
 
 relationOp : '==' | '!=' | '<' | '<=' | '>' | '>=' ;
 numbersOp : '*' | '/' | '%' | '+' | '-' ;

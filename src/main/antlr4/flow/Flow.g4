@@ -38,7 +38,7 @@ expression
     | expression relationOp expression  #relationOpExpression
     ;
 
-tryStatement : TRY controlStructureBody (CATCH controlStructureBody)? ;
+tryStatement : TRY controlStructureBody (CATCH LPAREN ID COLON TYPE RPAREN controlStructureBody)? ;
 
 loopStatement
     : forStatement

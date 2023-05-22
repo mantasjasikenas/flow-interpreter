@@ -705,6 +705,18 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             }
         } catch (FlowException e) {
             if (ctx.controlStructureBody().size() > 1) {
+
+                String variableName = ctx.ID().getText();
+                String variableType = ctx.TYPE().getText();
+                Object value = e.getMessage();
+
+                if (!variableType.equals("String")) {
+                    throw new FlowException("Wrong type of arguments in catch expression. Expected String but got " + variableType + ".");
+                }
+
+                Symbol variable = new Symbol(variableName, value, variableType, true);
+                symbolTable.defineCurrentScopeValue(variable);
+
                 Object o = visit(ctx.controlStructureBody(1));
                 if (o != null) {
                     return o;

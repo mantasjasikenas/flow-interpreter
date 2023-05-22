@@ -140,17 +140,38 @@ val a = setA(5);
 println("Returned value:");
 println(a);*/
 
-/*fun fibonacci(n: Int): Int {
-    if (n <= 1) {
-        return n + 1;
+
+
+
+class Calculator {
+    fun fibonacci(n: Int): Int {
+        if (n <= 1) {
+            return n;
+        }
+
+        writeToConsole(n);
+
+        return fibonacci(n - 1) + fibonacci(n - 2);
     }
 
-    println("gg");
-    return 10;
+    fun writeToConsole(number: Int): Unit {
+        println("Writer:" + number);
+    }
+
 }
 
-val fib = fibonacci(0);
-println(fib);*/
+
+
+
+val calculator = new Calculator();
+
+val count = 10;
+val returnedValue = calculator.fibonacci(count);
+calculator.writeToConsole(returnedValue);
+
+println(returnedValue);
+
+println("Program exited with code " + returnedValue + ".");
 
 
 fun fibonacci(n: Int): Int {
@@ -158,12 +179,11 @@ fun fibonacci(n: Int): Int {
         return n;
     }
 
+    calculator.writeToConsole(n);
+
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-
-val count = 10;
-val returnedValue = fibonacci(count);
-
-println(returnedValue);
+val fib = fibonacci(3);
+println(fib);
 

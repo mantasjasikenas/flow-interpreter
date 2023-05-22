@@ -31,9 +31,14 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     @Override
     public Object visitProgram(FlowParser.ProgramContext ctx) {
         super.visitProgram(ctx);
-        symbolTable.popScope();
+        symbolTable.clear();
 
         return SYSTEM_OUT.toString();
+    }
+
+    @Override
+    public Object visitGlobalStatement(FlowParser.GlobalStatementContext ctx) {
+        return super.visitGlobalStatement(ctx);
     }
 
     @Override
@@ -65,9 +70,21 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         Symbol objectSymbol = new Symbol(objectName, classDeclaration, className, isMutable);
         symbolTable.defineCurrentScopeValue(objectSymbol);
 
-        Scope classMembersScope = symbolTable.pushScope();
+        ClassScope classMembersScope = symbolTable.pushClassScope();
+        classMembersScope.setScopeName(objectName);
         objectSymbol.setScope(classMembersScope);
         classDeclaration.getClassFieldsContext().forEach(this::visit);
+
+        // TODO new code
+        List<FlowParser.MethodDeclarationContext> methodsContext = classDeclaration.getMethodDeclarationContext();
+        methodsContext.forEach(methodContext -> {
+            String methodName = methodContext.ID().getText();
+            String methodType = methodContext.TYPE() == null ?
+                    methodContext.UNIT().getText() :
+                    methodContext.TYPE().getText();
+            classMembersScope.defineMethod(new MethodDeclaration(methodName, methodType, methodContext));
+        });
+
 
         FlowParser.ClassConstructorContext classConstructorContext = classDeclaration.getConstructorDeclarationContext();
         visitClassConstructor(classConstructorContext, objectArgs);
@@ -88,7 +105,11 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             throw new FlowException("Expected no arguments but got " + objectArgs.expression().size() + ".");
         }
 
-        symbolTable.pushScope();
+        if (ctx == null) {
+            return;
+        }
+
+        symbolTable.pushLocalScope();
 
         if (objectArgs == null) {
             if (!ctx.methodParams().ID().isEmpty()) {
@@ -123,7 +144,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
         Object o = null;
 
-        symbolTable.pushScope();
+        symbolTable.pushLocalScope();
 
         for (FlowParser.StatementContext statementContext : ctx.statement()) {
             o = visit(statementContext);
@@ -180,46 +201,60 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         String methodName;
 
         int size = ctx.ID().size();
-        FlowParser.MethodArgsContext argsContext = ctx.methodArgs();
 
-        if (size == 1) {
-            objectName = "this";
-            methodName = ctx.ID(0).getText();
-        } else {
+        FlowParser.MethodArgsContext argsContext = ctx.methodArgs();
+        Scope currentScope = symbolTable.currentScope();
+
+
+        if (size == 2) {
             objectName = ctx.ID(0).getText();
             methodName = ctx.ID(1).getText();
+        } else {
+
+            // get class scope
+            Scope classScope = currentScope;
+            while (classScope != null && classScope.getType() != ScopeType.CLASS) {
+                classScope = classScope.getParent();
+            }
+
+            if ((classScope != null ? classScope.getType() : null) == ScopeType.CLASS) {
+                objectName = classScope.getScopeName();
+            } else {
+                objectName = null;
+            }
+
+            methodName = ctx.ID(0).getText();
         }
 
 
         // global method
-        if (objectName.equals("this")) {
+        if (objectName == null) {
             MethodDeclaration methodDeclaration = symbolTable.getGlobalMethod(methodName);
+
+            if (methodDeclaration == null) {
+                throw new FlowException("Method `" + methodName + "` does not exist.");
+            }
+
             FlowParser.MethodDeclarationContext context = methodDeclaration.getMethodDeclarationContext();
 
             if (methodDeclaration == null) {
                 throw new FlowException("Method " + methodName + " does not exist.");
             }
 
-
             List<Object> args = (List<Object>) visitMethodArgs(argsContext);
 
-            Scope methodScope = symbolTable.pushScope();
+            Scope methodScope = symbolTable.pushLocalScope();
             methodScope.setParent(symbolTable.getScope(0));
 
             visitMethodParams(methodDeclaration.getMethodDeclarationContext().methodParams(), args);
-
-            if (argsContext != null) {
-                //visitMethodArgs(argsContext, methodDeclaration.getMethodDeclarationContext());
-
-            }
 
 
             return getMethodReturnValue(methodName, context);
         }
 
 
-        // FIXME class method
-        Scope currentScope = symbolTable.currentScope();
+        // FIXME there is a bug here
+
         Symbol object = currentScope.resolve(objectName);
 
         // check if object exists
@@ -239,14 +274,13 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             throw new FlowException("Method " + methodName + " does not exist.");
         }
 
+        List<Object> args = (List<Object>) visitMethodArgs(argsContext);
 
         Scope classScope = object.getScope();
-        Scope methodScope = symbolTable.pushScope();
+        Scope methodScope = symbolTable.pushLocalScope();
         methodScope.setParent(classScope);
 
-        if (argsContext != null) {
-            visitMethodArgs(argsContext, methodDeclaration);
-        }
+        visitMethodParams(methodDeclaration.methodParams(), args);
 
 
         return getMethodReturnValue(methodName, methodDeclaration);
@@ -505,29 +539,35 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     }
 
     @Override
-    public Object visitIntAddOpExpression(FlowParser.IntAddOpExpressionContext ctx) {
+    public Object visitNumberOpExpression(FlowParser.NumberOpExpressionContext ctx) {
         Object val1 = visit(ctx.expression(0));
         Object val2 = visit(ctx.expression(1));
+        String op = ctx.numbersOp().getText();
 
-        return switch (ctx.intAddOp().getText()) {
-            case "+" -> (Integer) val1 + (Integer) val2;
-            case "-" -> (Integer) val1 - (Integer) val2;
-            default -> null;
-        };
+        // get type of val1 and val2
+        String type1 = getClassName(val1);
+        String type2 = getClassName(val2);
+
+        if (type1.equals("String") || type2.equals("String")) {
+            return getStringOpResult(op, val1.toString(), val2.toString());
+        }
+
+        // check if types are same
+        if (!type1.equals(type2)) {
+            throw new FlowException("Wrong type of arguments in expression. Expected " + type1 + " but got " + type2 + ".");
+        }
+
+        if (type1.equals("Int")) {
+            return getIntOpResult(op, (Integer) val1, (Integer) val2);
+        }
+
+        if (type1.equals("Double")) {
+            return getDoubleOpResult(op, (Double) val1, (Double) val2);
+        }
+
+        throw new FlowException("Wrong type of arguments in expression. Expected String, Int or Double but got " + type1 + ".");
     }
 
-    @Override
-    public Object visitIntMultiOpExpression(FlowParser.IntMultiOpExpressionContext ctx) {
-        Object val1 = visit(ctx.expression(0));
-        Object val2 = visit(ctx.expression(1));
-        //TODO - validation etc
-        return switch (ctx.intMultiOp().getText()) {
-            case "*" -> (Integer) val1 * (Integer) val2;
-            case "/" -> (Integer) val1 / (Integer) val2;
-            case "%" -> (Integer) val1 % (Integer) val2;
-            default -> null;
-        };
-    }
 
     @Override
     public Object visitIfStatement(FlowParser.IfStatementContext ctx) {
@@ -583,7 +623,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             throw new FlowException("Range expression must return list of integers.");
         }
 
-        symbolTable.pushScope();
+        symbolTable.pushLocalScope();
         Symbol cycleVariable = new Symbol(ctx.ID().getText(), null, "Int", true);
         symbolTable.defineCurrentScopeValue(cycleVariable);
 

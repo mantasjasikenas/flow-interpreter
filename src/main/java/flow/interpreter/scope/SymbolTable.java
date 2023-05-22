@@ -18,7 +18,7 @@ public class SymbolTable {
         allScopes.add(globalScope);
     }
 
-    public Scope pushScope() {
+    public Scope pushLocalScope() {
         Scope parent = scopeStack.peek();
         Scope scope = new Scope(ScopeType.LOCAL, nextGenId(), parent);
 
@@ -28,7 +28,28 @@ public class SymbolTable {
         return scope;
     }
 
-    public Scope pushScope(Scope scope) {
+    public Scope pushLocalScope(ScopeType type) {
+        Scope parent = scopeStack.peek();
+        Scope scope = new Scope(type, nextGenId(), parent);
+
+        scopeStack.push(scope);
+        allScopes.add(scope);
+
+        return scope;
+    }
+
+    public ClassScope pushClassScope() {
+        Scope parent = scopeStack.peek();
+        ClassScope scope = new ClassScope(ScopeType.CLASS, nextGenId(), parent);
+
+        scopeStack.push(scope);
+        allScopes.add(scope);
+
+        return scope;
+    }
+
+
+    public Scope pushLocalScope(Scope scope) {
         scopeStack.push(scope);
 
         return scope;
@@ -48,9 +69,14 @@ public class SymbolTable {
 
     public Scope getScope(int genId) {
         for (Scope scope : scopeStack) {
-            if (scope.genId == genId) return scope;
+            if (scope.getGenId() == genId) return scope;
         }
         return null;
+    }
+
+    public void clear() {
+        scopeStack.clear();
+        allScopes.clear();
     }
 
     public void defineCurrentScopeValue(Symbol symbol) {

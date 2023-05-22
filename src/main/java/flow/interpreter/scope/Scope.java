@@ -5,9 +5,9 @@ import java.util.Map;
 
 public class Scope {
 
-    public final int genId;
-
-    public ScopeType type;
+    private final int genId;
+    private ScopeType type;
+    private String scopeName;
     private Scope parent;
     private final Map<String, Symbol> symbolTable = new HashMap<>();
 
@@ -46,5 +46,25 @@ public class Scope {
 
     public void setParent(Scope classScope) {
         this.parent = classScope;
+    }
+
+    public int getGenId() {
+        return genId;
+    }
+
+    public ScopeType getType() {
+        return type;
+    }
+
+    public void setType(ScopeType type) {
+        this.type = type;
+    }
+
+    public String getScopeName() {
+        return scopeName;
+    }
+
+    public void setScopeName(String scopeName) {
+        this.scopeName = scopeName;
     }
 }

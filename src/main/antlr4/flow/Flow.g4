@@ -23,7 +23,7 @@ statement
 
 expression
     : INT                               #intExpression
-    |DOUBLE                            #doubleExpression
+    | DOUBLE                            #doubleExpression
     | STRING                            #stringExpression
     | CHAR                              #charExpression
     | BOOLEAN                           #booleanExpression
@@ -32,8 +32,7 @@ expression
     | methodInvocation                  #methodInvocationExpression
     | iOStatement                       #iOStatementExpression
     | LPAREN expression RPAREN          #parenthesesExpression
-    | expression intMultiOp expression  #intMultiOpExpression
-    | expression intAddOp expression    #intAddOpExpression
+    | expression numbersOp expression   #numberOpExpression
     | expression relationOp expression  #relationOpExpression
     ;
 
@@ -142,9 +141,8 @@ ARRAY_TYPE : 'Array' '<' TYPE '>';
 
 
 relationOp : '==' | '!=' | '<' | '<=' | '>' | '>=' ;
-charRelationOp : '==' | '!=' ;
-intMultiOp : '*' | '/' | '%' ;
-intAddOp : '+' | '-' ;
+numbersOp : '*' | '/' | '%' | '+' | '-' ;
+stringConcatOp : '+' ;
 
 ASSIGN: '=' ;
 SEMICOLON: ';' ;

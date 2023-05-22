@@ -34,6 +34,15 @@ public class ClassDeclaration {
                 .orElse(null);
     }
 
+    public List<FlowParser.MethodDeclarationContext> getMethodDeclarationContext() {
+        return classDeclarationContext
+                .classMember()
+                .stream()
+                .map(FlowParser.ClassMemberContext::methodDeclaration)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
     public FlowParser.ClassConstructorContext getConstructorDeclarationContext() {
         return classDeclarationContext
                 .classMember()

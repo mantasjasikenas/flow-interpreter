@@ -56,6 +56,40 @@ public class Helpers {
         };
     }
 
+    public static Object getDoubleOpResult(String op, Double val1, Double val2) {
+        return switch (op) {
+            case "+" -> val1 + val2;
+            case "-" -> val1 - val2;
+            case "*" -> val1 * val2;
+            case "/" -> val1 / val2;
+            case "%" -> val1 % val2;
+            default -> null;
+        };
+    }
+
+    public static Object getIntOpResult(String op, Integer val1, Integer val2) {
+        return switch (op) {
+            case "+" -> val1 + val2;
+            case "-" -> val1 - val2;
+            case "*" -> val1 * val2;
+            case "/" -> val1 / val2;
+            case "%" -> val1 % val2;
+            default -> null;
+        };
+    }
+
+    public static String getStringOpResult(String op, String val1, String val2) {
+        if (op.equals("+")) {
+            return val1 + val2;
+        }
+
+        throw new FlowException("Wrong operator " + op + " for String type.");
+    }
+
+    public static boolean isNumber(String type) {
+        return type.equals("Int") || type.equals("Double");
+    }
+
     public static String readFromFile(String path) {
         try {
             return Files.readString(Paths.get(path));

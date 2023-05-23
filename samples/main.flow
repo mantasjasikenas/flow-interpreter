@@ -128,43 +128,9 @@ println(toString(5));
 
 
 
-/*try {
-    val a: String;
-    println(a);
-} catch (message: String) {
-    println("Exception caught:");
-    println(message);
-}
-var a: Int = 5;
-var b: Int = 10;
-
-a = b + 5;
-println(a);*/
+/*
 
 
-fun testForCycle() {
-    println("For cycle:");
-
-    var start: Int = 5;
-    val end: Int = 10;
-
-    for(a in start..end){
-        println(a);
-    }
-}
-
-fun testWhileCycle(i : Int, n : Int) {
-    println("While cycle:");
-
-    while (i <= n) {
-        println(i);
-        i = i + 1;
-    }
-}
-
-testForCycle();
-println();
-testWhileCycle(0, 15);
 
 
 println("Program exited.");

@@ -106,8 +106,6 @@ public class Helpers {
         }
     }
 
-
-    // FIXME not working together with readFromConsole
     public static String readLnFromConsole() {
         try {
             Scanner scanner = new Scanner(System.in);

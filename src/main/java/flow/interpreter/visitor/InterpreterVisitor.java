@@ -532,10 +532,13 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
     @Override
     public Object visitTryStatement(FlowParser.TryStatementContext ctx) {
+        symbolTable.pushLocalScope();
 
         try {
+
             Object o = visit(ctx.controlStructureBody(0));
             if (o != null) {
+                symbolTable.popScope();
                 return o;
             }
         } catch (FlowException e) {
@@ -554,6 +557,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
 
                 Object o = visit(ctx.controlStructureBody(1));
                 if (o != null) {
+                    symbolTable.popScope();
                     return o;
                 }
             } else {
@@ -563,6 +567,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
             }
         }
 
+        symbolTable.popScope();
         return null;
     }
 

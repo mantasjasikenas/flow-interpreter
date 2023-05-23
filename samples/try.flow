@@ -1,0 +1,20 @@
+
+try {
+    val a: String;
+    println(a);
+    println();
+} catch (message: String) {
+    println("Exception caught:");
+    println(message);
+    println();
+}
+
+try {
+    val a: String = "test2";
+    a = "test";
+}
+
+val a = "test3";
+println(a);
+
+println("Program exited.");

@@ -45,6 +45,20 @@ public class FlowInterpreter {
                     printHelp();
                     System.exit(0);
                 }
+                case "-c" -> {
+                    // allow user to enter file name in command line
+                    System.out.println("Enter file name: ");
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+                    try {
+                        filename = reader.readLine();
+                        if (!filename.startsWith("samples")) {
+                            filename = "samples/" + filename;
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
                 default -> {
                     // If an invalid argument is provided, print an error message and the help information and exit the program
                     System.err.println("Error: Invalid argument: " + args[i]);

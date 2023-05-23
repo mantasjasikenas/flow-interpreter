@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run file" type="Application" factoryName="Application">
+  <configuration default="false" name="Run samples file" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="flow.interpreter.FlowInterpreter" />
     <module name="flow-interpreter" />
-    <option name="PROGRAM_PARAMETERS" value="-f samples/main.flow" />
+    <option name="PROGRAM_PARAMETERS" value="-c" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

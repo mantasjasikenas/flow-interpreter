@@ -59,6 +59,14 @@ public class FlowInterpreter {
                     }
 
                 }
+                case "-m" -> {
+                    // allow user to enter file name in command line
+                    try {
+                        processMultipleFilesInput();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 default -> {
                     // If an invalid argument is provided, print an error message and the help information and exit the program
                     System.err.println("Error: Invalid argument: " + args[i]);
@@ -72,6 +80,11 @@ public class FlowInterpreter {
             if (isInteractiveMode) {
                 processInteractiveInput();
             } else {
+
+                if (filename == null) {
+                    return;
+                }
+
                 processFile(filename);
             }
         } catch (Exception e) {
@@ -114,6 +127,42 @@ public class FlowInterpreter {
             }
         }
     }
+
+    private static void processMultipleFilesInput() throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        String filePath = "";
+
+        System.out.println("Execute multiple files from samples folder. Enter 'exit' to exit.\n");
+
+        while (true) {
+            System.out.println("Enter file name:");
+            System.out.print("> ");
+
+            filePath = reader.readLine();
+
+            if (Objects.equals(filePath, "exit")) {
+                break;
+            }
+
+            try {
+                if (!filePath.startsWith("samples")) {
+                    filePath = "samples/" + filePath;
+                }
+
+                if (!filePath.endsWith(".flow")) {
+                    filePath = filePath + ".flow";
+                }
+
+                processFile(filePath);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("<ERROR> " + e.getMessage());
+            }
+
+            System.out.println();
+        }
+    }
+
 
     public static void processFile(String filename) {
         SymbolTable symbolTable = new SymbolTable();

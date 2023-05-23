@@ -119,7 +119,7 @@ public class FlowInterpreter {
         SymbolTable symbolTable = new SymbolTable();
         try {
             String output = executeCode(symbolTable, CharStreams.fromFileName(filename));
-            System.out.println("[PROGRAM OUTPUT]");
+            System.out.println("\u001B[45m" + "[PROGRAM OUTPUT]" + "\u001B[0m");
             System.out.println(output);
         } catch (Exception e) {
             e.printStackTrace();

@@ -35,7 +35,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
         super.visitProgram(ctx);
         symbolTable.clear();
 
-        return SYSTEM_OUT.toString();
+        return SYSTEM_OUT.append("\n").toString();
     }
 
     @Override

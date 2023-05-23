@@ -130,8 +130,8 @@ methodArgs : (expression (COMMA expression)*) ;
 
 
 
-INT     : [0-9]+ ;
-DOUBLE  : [0-9]+ '.' [0-9]+ ;
+INT     : ('-')?[0-9]+ ;
+DOUBLE  : ('-')?[0-9]+ '.' [0-9]+ ;
 STRING  : QUOTE .*? QUOTE ;
 CHAR : APOSTROPHE .? APOSTROPHE ;
 BOOLEAN : 'true' | 'false' ;

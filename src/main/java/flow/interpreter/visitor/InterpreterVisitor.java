@@ -225,7 +225,7 @@ public class InterpreterVisitor extends FlowBaseVisitor<Object> {
     private Object getMethodReturnValue(String methodName, FlowParser.MethodDeclarationContext methodDeclaration) {
         Object returnValue = visit(methodDeclaration.methodStructureBody());
         String returnType = methodDeclaration.TYPE() == null ?
-                methodDeclaration.UNIT().getText() :
+                "Unit" :
                 methodDeclaration.TYPE().getText();
 
         List<FlowParser.MethodBodyStatementContext> bodyStatements = methodDeclaration

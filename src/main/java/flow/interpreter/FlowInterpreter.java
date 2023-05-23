@@ -105,11 +105,11 @@ public class FlowInterpreter {
         SymbolTable symbolTable = new SymbolTable();
         try {
             String output = executeCode(symbolTable, CharStreams.fromFileName(filename));
-            System.out.println("<PROGRAM OUTPUT>");
+            System.out.println("[PROGRAM OUTPUT]");
             System.out.println(output);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("<ERROR> " + e.getMessage());
+            System.out.println("\n\u001B[31m" + "[ERROR] " + e.getMessage() + "\u001B[0m");
         }
     }
 
